@@ -4,7 +4,6 @@ import "github.com/dancannon/gorethink"
 
 type RethinkStore struct {
 	session *gorethink.Session
-	table   string
 }
 
 type payload struct {
@@ -12,7 +11,7 @@ type payload struct {
 	Payload   interface{} `gorethink:"payload"`
 }
 
-func New(addr, db, table string) (*RethinkStore, error) {
+func New(addr, db string) (*RethinkStore, error) {
 	session, err := gorethink.Connect(gorethink.ConnectOpts{
 		Address:  addr,
 		Database: db,
@@ -22,16 +21,14 @@ func New(addr, db, table string) (*RethinkStore, error) {
 	}
 	return &RethinkStore{
 		session: session,
-		table:   table,
 	}, nil
 }
 
-func (r *RethinkStore) Save(data []byte) error {
+func (r *RethinkStore) Save(table string, data []byte) error {
 	p := payload{
 		Timestamp: gorethink.Now(),
 		Payload:   gorethink.Json(string(data)),
 	}
-
-	_, err := gorethink.Table(r.table).Insert(p).RunWrite(r.session)
+	_, err := gorethink.Table(table).Insert(p).RunWrite(r.session)
 	return err
 }

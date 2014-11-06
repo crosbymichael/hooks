@@ -16,15 +16,13 @@ var serveCommand = cli.Command{
 		cli.StringFlag{Name: "addr", Value: ":8001", Usage: "HTTP address to serve api on"},
 		cli.StringFlag{Name: "rethink-addr", Value: "127.0.0.1:28015", Usage: "rethinkdb address"},
 		cli.StringFlag{Name: "db", Value: "github", Usage: "rethinkdb database"},
-		cli.StringFlag{Name: "table", Usage: "rethinkdb table to store data"},
 	},
 	Action: serveAction,
 }
 
 func serveAction(context *cli.Context) {
 	r := mux.NewRouter()
-
-	store, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"), context.String("table"))
+	store, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"))
 	if err != nil {
 		logger.Fatal(err)
 	}

@@ -39,7 +39,7 @@ func (h *Github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.Save(data); err != nil {
+	if err := h.store.Save(repo, data); err != nil {
 		h.logger.WithFields(fields).Errorf("save %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -1,5 +1,5 @@
 package handler
 
 type Store interface {
-	Save([]byte) error
+	Save(table string, data []byte) error
 }
