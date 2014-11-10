@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -9,15 +12,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewGithubHandler(store store.Store, logger *logrus.Logger) http.Handler {
+func NewGithubHandler(store store.Store, secret string, logger *logrus.Logger) http.Handler {
 	return &Github{
 		store:  store,
 		logger: logger,
+		secret: secret,
 	}
 }
 
 type Github struct {
 	store  store.Store
+	secret string
 	logger *logrus.Logger
 }
 
@@ -39,9 +44,59 @@ func (h *Github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	if !h.validateSignature(fields, r, data) {
+		h.logger.WithFields(fields).Warn("github webhook signature verification failed")
+		http.Error(w, http.StatusText(404), 404)
+		return
+	}
+
 	if err := h.store.Save(repo, data); err != nil {
 		h.logger.WithFields(fields).Errorf("save %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *Github) validateSignature(fields logrus.Fields, r *http.Request, payload []byte) bool {
+	// if we don't have a secret to validate then just return true
+	// because the user does not care about security
+	if h.secret == "" {
+		return true
+	}
+	actual := r.Header.Get("X-Hub-Signature")
+	fields["gh_signature"] = actual
+	expected, err := getExpectedSignature([]byte(h.secret), payload)
+	if err != nil {
+		h.logger.WithFields(fields).Errorf("expected signature %s", err)
+		return false
+	}
+	fields["signature"] = expected
+	h.logger.WithFields(fields).Debugf("github request signature")
+	return secureCompare(actual, expected)
+}
+
+func getExpectedSignature(raw, payload []byte) (string, error) {
+	hash := sha1.New()
+	defer hash.Reset()
+	if _, err := hash.Write(raw); err != nil {
+		return "", err
+	}
+	if _, err := hash.Write(payload); err != nil {
+		return "", nil
+	}
+	return fmt.Sprintf("sha1=%s", hex.EncodeToString(hash.Sum(nil))), nil
+}
+
+// ref:
+// https://github.com/rack/rack/blob/master/lib/rack/utils.rb#L424
+func secureCompare(actual, expected string) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+	valid := true
+	for i := 0; i < len(actual); i++ {
+		valid = actual[i] == expected[i] && valid
+	}
+	return valid
 }

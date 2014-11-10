@@ -20,6 +20,7 @@ var serveCommand = cli.Command{
 		cli.StringFlag{Name: "rethink-addr", Usage: "rethinkdb address"},
 		cli.StringFlag{Name: "nsqd-addr", Usage: "nsqd address"},
 		cli.StringFlag{Name: "db", Value: "github", Usage: "rethinkdb database"},
+		cli.StringFlag{Name: "secret", Usage: "github secret for the webhook"},
 	},
 	Action: serveAction,
 }
@@ -41,7 +42,7 @@ func serveAction(context *cli.Context) {
 		logger.Fatal(err)
 	}
 	defer store.Close()
-	r.Handle("/{user:.*}/{repo:.*}/", handler.NewGithubHandler(store, logger)).Methods("POST")
+	r.Handle("/{user:.*}/{repo:.*}/", handler.NewGithubHandler(store, context.String("secret"), logger)).Methods("POST")
 	if err := http.ListenAndServe(context.String("addr"), r); err != nil {
 		logger.Fatal(err)
 	}
