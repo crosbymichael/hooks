@@ -7,7 +7,7 @@ import (
 )
 
 func New(addr string) (*NsqStore, error) {
-	p, err := nsq.NewProducer(addr, nil)
+	p, err := nsq.NewProducer(addr, nsq.NewConfig())
 	if err != nil {
 		return nil, err
 	}
