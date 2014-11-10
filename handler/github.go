@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/crosbymichael/hooks/store"
 	"github.com/gorilla/mux"
 )
 
-func NewGithubHandler(store Store, logger *logrus.Logger) http.Handler {
+func NewGithubHandler(store store.Store, logger *logrus.Logger) http.Handler {
 	return &Github{
 		store:  store,
 		logger: logger,
@@ -16,7 +17,7 @@ func NewGithubHandler(store Store, logger *logrus.Logger) http.Handler {
 }
 
 type Github struct {
-	store  Store
+	store  store.Store
 	logger *logrus.Logger
 }
 
@@ -38,7 +39,6 @@ func (h *Github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	if err := h.store.Save(repo, data); err != nil {
 		h.logger.WithFields(fields).Errorf("save %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

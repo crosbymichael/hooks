@@ -32,3 +32,7 @@ func (r *RethinkStore) Save(table string, data []byte) error {
 	_, err := gorethink.Table(table).Insert(p).RunWrite(r.session)
 	return err
 }
+
+func (r *RethinkStore) Close() error {
+	return r.session.Close()
+}
