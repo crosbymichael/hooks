@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitly/go-nsq"
 	"github.com/codegangsta/cli"
+	"github.com/dancannon/gorethink"
 )
 
 type QueueOpts struct {
@@ -53,4 +54,12 @@ func ProcessQueue(handler nsq.Handler, opts QueueOpts) error {
 		}
 	}
 	return nil
+}
+
+func NewRethinkdbSession(context *cli.Context) (*gorethink.Session, error) {
+	return gorethink.Connect(gorethink.ConnectOpts{
+		Database: context.String("db"),
+		AuthKey:  context.String("rethink-key"),
+		Address:  context.String("rethink-addr"),
+	})
 }

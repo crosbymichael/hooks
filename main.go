@@ -15,6 +15,7 @@ var (
 	globalCommands = []cli.Command{
 		serveCommand,
 		archiveCommand,
+		multiplexCommand,
 	}
 )
 
@@ -28,8 +29,8 @@ func preload(context *cli.Context) error {
 func main() {
 	app := cli.NewApp()
 	app.Name = "hooks"
-	app.Usage = "manage webhooks"
-	app.Version = "1"
+	app.Usage = "manage github webhooks and events"
+	app.Version = "2"
 	app.Before = preload
 	app.Commands = globalCommands
 	app.Flags = globalFlags

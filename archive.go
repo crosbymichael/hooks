@@ -3,8 +3,7 @@ package main
 import (
 	"github.com/bitly/go-nsq"
 	"github.com/codegangsta/cli"
-	"github.com/crosbymichael/hooks/rethinkdb"
-	"github.com/crosbymichael/hooks/store"
+	"github.com/crosbymichael/hooks/workers"
 )
 
 var archiveCommand = cli.Command{
@@ -18,38 +17,33 @@ var archiveCommand = cli.Command{
 		cli.StringFlag{Name: "nsqlookupd", Usage: "nsqlookupd address"},
 		cli.StringFlag{Name: "topic", Usage: "nsqd topic to listen to"},
 		cli.StringFlag{Name: "channel", Value: "archive", Usage: "nsqd channel to listen to"},
-		cli.BoolFlag{Name: "multiplex", Usage: "push messages on the queue for each listener"},
+		cli.StringFlag{Name: "nsqd", Usage: "nsqd address"},
+		cli.StringFlag{Name: "ext-urls", Usage: "rethinkdb table for external urls to publish hooks to"},
+		cli.StringFlag{Name: "hook-queue", Usage: "queue that has workers on it to publish webhooks"},
 	},
 	Action: archiveAction,
 }
 
-type storeHandler struct {
-	table    string
-	store    store.Store
-	producer *nsq.Producer
-}
-
-func (s *storeHandler) HandleMessage(m *nsq.Message) error {
-	var (
-		id  string
-		err error
-	)
-	if id, err = s.store.Save(s.table, m.Body); err != nil {
-		return err
-	}
-	if s.producer != nil {
-
-	}
-	return nil
-}
-
 func archiveAction(context *cli.Context) {
-	r, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"), context.String("rethink-key"))
+	var (
+		producer                           *nsq.Producer
+		externalURLTable, hookPublishQueue string
+	)
+	session, err := NewRethinkdbSession(context)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	defer r.Close()
-	handler := &storeHandler{store: r, table: context.String("table"), multiplex: context.Bool("multiplex")}
+	defer session.Close()
+	if nsqd := context.String("nsqd"); nsqd != "" {
+		if producer, err = nsq.NewProducer(nsqd, nsq.NewConfig()); err != nil {
+			logger.Fatal(err)
+		}
+		defer producer.Stop()
+		externalURLTable = context.String("ext-urls")
+		hookPublishQueue = context.String("hook-queue")
+	}
+
+	handler := workers.NewArchiveWorker(session, context.String("table"), externalURLTable, hookPublishQueue, producer)
 	if err := ProcessQueue(handler, QueueOptsFromContext(context)); err != nil {
 		logger.Fatal(err)
 	}
