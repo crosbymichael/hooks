@@ -14,6 +14,7 @@ var (
 	}
 	globalCommands = []cli.Command{
 		serveCommand,
+		archiveCommand,
 	}
 )
 
