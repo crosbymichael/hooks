@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -73,30 +74,13 @@ func (h *Github) validateSignature(fields logrus.Fields, r *http.Request, payloa
 	}
 	fields["signature"] = expected
 	h.logger.WithFields(fields).Debugf("github request signature")
-	return secureCompare(actual, expected)
+	return hmac.Equal([]byte(expected), []byte(actual))
 }
 
 func getExpectedSignature(raw, payload []byte) (string, error) {
-	hash := sha1.New()
-	defer hash.Reset()
-	if _, err := hash.Write(raw); err != nil {
-		return "", err
-	}
-	if _, err := hash.Write(payload); err != nil {
+	mac := hmac.New(sha1.New, raw)
+	if _, err := mac.Write(payload); err != nil {
 		return "", nil
 	}
-	return fmt.Sprintf("sha1=%s", hex.EncodeToString(hash.Sum(nil))), nil
-}
-
-// ref:
-// https://github.com/rack/rack/blob/master/lib/rack/utils.rb#L424
-func secureCompare(actual, expected string) bool {
-	if len(actual) != len(expected) {
-		return false
-	}
-	valid := true
-	for i := 0; i < len(actual); i++ {
-		valid = actual[i] == expected[i] && valid
-	}
-	return valid
+	return fmt.Sprintf("sha1=%s", hex.EncodeToString(mac.Sum(nil))), nil
 }
