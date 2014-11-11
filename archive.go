@@ -16,6 +16,7 @@ var archiveCommand = cli.Command{
 	Usage: "archive hooks into a persistent store",
 	Flags: []cli.Flag{
 		cli.StringFlag{Name: "rethink-addr", Usage: "rethinkdb address"},
+		cli.StringFlag{Name: "rethink-key", Usage: "rethinkdb auth key"},
 		cli.StringFlag{Name: "db", Value: "github", Usage: "rethinkdb database"},
 		cli.StringFlag{Name: "table", Usage: "rethinkdb table"},
 		cli.StringFlag{Name: "nsqlookupd", Usage: "nsqlookupd address"},
@@ -38,7 +39,7 @@ func archiveAction(context *cli.Context) {
 	s := make(chan os.Signal, 64)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
-	r, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"))
+	r, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"), context.String("rethink-key"))
 	if err != nil {
 		logger.Fatal(err)
 	}

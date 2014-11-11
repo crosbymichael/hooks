@@ -18,6 +18,7 @@ var serveCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{Name: "addr", Value: ":8001", Usage: "HTTP address to serve api on"},
 		cli.StringFlag{Name: "rethink-addr", Usage: "rethinkdb address"},
+		cli.StringFlag{Name: "rethink-key", Usage: "rethinkdb auth key"},
 		cli.StringFlag{Name: "db", Value: "github", Usage: "rethinkdb database"},
 		cli.StringFlag{Name: "nsqd-addr", Usage: "nsqd address"},
 		cli.StringFlag{Name: "secret", Usage: "github secret for the webhook"},
@@ -27,7 +28,7 @@ var serveCommand = cli.Command{
 
 func newStore(context *cli.Context) (store.Store, error) {
 	if addr := context.String("rethink-addr"); addr != "" {
-		return rethinkdb.New(addr, context.String("db"))
+		return rethinkdb.New(addr, context.String("db"), context.String("rethink-key"))
 	}
 	if addr := context.String("nsqd-addr"); addr != "" {
 		return nsqd.New(addr)

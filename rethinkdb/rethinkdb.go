@@ -11,10 +11,11 @@ type payload struct {
 	Payload   interface{} `gorethink:"payload"`
 }
 
-func New(addr, db string) (*RethinkStore, error) {
+func New(addr, db, token string) (*RethinkStore, error) {
 	session, err := gorethink.Connect(gorethink.ConnectOpts{
 		Address:  addr,
 		Database: db,
+		AuthKey:  token,
 	})
 	if err != nil {
 		return nil, err
