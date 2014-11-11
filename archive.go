@@ -1,10 +1,6 @@
 package main
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/bitly/go-nsq"
 	"github.com/codegangsta/cli"
 	"github.com/crosbymichael/hooks/rethinkdb"
@@ -36,31 +32,13 @@ func (s *storeHandler) HandleMessage(m *nsq.Message) error {
 }
 
 func archiveAction(context *cli.Context) {
-	s := make(chan os.Signal, 64)
-	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
-
 	r, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"), context.String("rethink-key"))
 	if err != nil {
 		logger.Fatal(err)
 	}
 	defer r.Close()
-
-	consumer, err := nsq.NewConsumer(context.String("topic"), context.String("channel"), nsq.NewConfig())
-	if err != nil {
+	handler := &storeHandler{store: r, table: context.String("table")}
+	if err := ProcessQueue(handler, QueueOptsFromContext(context)); err != nil {
 		logger.Fatal(err)
-	}
-	consumer.AddHandler(&storeHandler{store: r, table: context.String("table")})
-	if err := consumer.ConnectToNSQLookupd(context.String("nsqlookupd")); err != nil {
-		logger.Fatal(err)
-	}
-
-	for {
-		select {
-		case <-consumer.StopChan:
-			return
-		case sig := <-s:
-			logger.WithField("signal", sig).Debug("received signal")
-			consumer.Stop()
-		}
 	}
 }
