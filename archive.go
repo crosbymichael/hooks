@@ -9,7 +9,7 @@ import (
 
 var archiveCommand = cli.Command{
 	Name:  "archive",
-	Usage: "archive hooks into a persistent store",
+	Usage: "archive hooks into a rethinkdb for processing",
 	Flags: []cli.Flag{
 		cli.StringFlag{Name: "rethink-addr", Usage: "rethinkdb address"},
 		cli.StringFlag{Name: "rethink-key", Usage: "rethinkdb auth key"},
@@ -18,17 +18,29 @@ var archiveCommand = cli.Command{
 		cli.StringFlag{Name: "nsqlookupd", Usage: "nsqlookupd address"},
 		cli.StringFlag{Name: "topic", Usage: "nsqd topic to listen to"},
 		cli.StringFlag{Name: "channel", Value: "archive", Usage: "nsqd channel to listen to"},
+		cli.BoolFlag{Name: "multiplex", Usage: "push messages on the queue for each listener"},
 	},
 	Action: archiveAction,
 }
 
 type storeHandler struct {
-	table string
-	store store.Store
+	table    string
+	store    store.Store
+	producer *nsq.Producer
 }
 
 func (s *storeHandler) HandleMessage(m *nsq.Message) error {
-	return s.store.Save(s.table, m.Body)
+	var (
+		id  string
+		err error
+	)
+	if id, err = s.store.Save(s.table, m.Body); err != nil {
+		return err
+	}
+	if s.producer != nil {
+
+	}
+	return nil
 }
 
 func archiveAction(context *cli.Context) {
@@ -37,7 +49,7 @@ func archiveAction(context *cli.Context) {
 		logger.Fatal(err)
 	}
 	defer r.Close()
-	handler := &storeHandler{store: r, table: context.String("table")}
+	handler := &storeHandler{store: r, table: context.String("table"), multiplex: context.Bool("multiplex")}
 	if err := ProcessQueue(handler, QueueOptsFromContext(context)); err != nil {
 		logger.Fatal(err)
 	}

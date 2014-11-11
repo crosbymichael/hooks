@@ -5,5 +5,5 @@ import "io"
 // Store provides a way to persist the raw webhook
 type Store interface {
 	io.Closer
-	Save(table string, data []byte) error
+	Save(table string, data []byte) (string, error)
 }
