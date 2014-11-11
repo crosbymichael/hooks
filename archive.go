@@ -20,7 +20,7 @@ var archiveCommand = cli.Command{
 		cli.StringFlag{Name: "table", Usage: "rethinkdb table"},
 		cli.StringFlag{Name: "nsqlookupd", Usage: "nsqlookupd address"},
 		cli.StringFlag{Name: "topic", Usage: "nsqd topic to listen to"},
-		cli.StringFlag{Name: "channel", Usage: "nsqd channel to listen to"},
+		cli.StringFlag{Name: "channel", Value: "archive", Usage: "nsqd channel to listen to"},
 	},
 	Action: archiveAction,
 }
@@ -38,7 +38,7 @@ func archiveAction(context *cli.Context) {
 	s := make(chan os.Signal, 64)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM)
 
-	r, err := rethinkdb.New(context.String("rethinkdb-addr"), context.String("db"))
+	r, err := rethinkdb.New(context.String("rethink-addr"), context.String("db"))
 	if err != nil {
 		logger.Fatal(err)
 	}
