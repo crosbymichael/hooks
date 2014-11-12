@@ -100,9 +100,9 @@ func (w *MultiplexWorker) fetchPayload(p *Payload) ([]byte, error) {
 		return nil, err
 	}
 	defer r.Close()
-	var data []byte
-	if err := r.One(&data); err != nil {
+	var i map[string]interface{}
+	if err := r.One(&i); err != nil {
 		return nil, err
 	}
-	return data, nil
+	return json.Marshal(i)
 }
