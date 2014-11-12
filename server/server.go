@@ -9,7 +9,7 @@ import (
 	"github.com/bitly/go-nsq"
 )
 
-const ROUTE = "/{user:.*}/{repo:.*}/"
+const ROUTE = "/{user:.*}/{name:.*}/"
 
 // New returns a new http.Handler that handles github webhooks from the github API.
 // After receiving a hook the handler will push the message onto the specified NSQ Queue.
