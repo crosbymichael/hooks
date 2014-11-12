@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/bitly/go-nsq"
-	"github.com/codegangsta/cli"
 	"github.com/dancannon/gorethink"
 )
 
@@ -18,12 +17,12 @@ type QueueOpts struct {
 	Signals     []os.Signal
 }
 
-func QueueOptsFromContext(context *cli.Context) QueueOpts {
+func QueueOptsFromContext(channel, topic string) QueueOpts {
 	return QueueOpts{
 		Signals:     []os.Signal{syscall.SIGTERM, syscall.SIGINT},
-		LookupdAddr: context.String("nsqlookupd"),
-		Topic:       context.String("topic"),
-		Channel:     context.String("channel"),
+		LookupdAddr: config.Lookupd,
+		Topic:       topic,
+		Channel:     channel,
 		Concurrent:  1,
 	}
 }
@@ -56,10 +55,10 @@ func ProcessQueue(handler nsq.Handler, opts QueueOpts) error {
 	return nil
 }
 
-func NewRethinkdbSession(context *cli.Context) (*gorethink.Session, error) {
+func NewRethinkdbSession() (*gorethink.Session, error) {
 	return gorethink.Connect(gorethink.ConnectOpts{
-		Database: context.String("db"),
-		AuthKey:  context.String("rethink-key"),
-		Address:  context.String("rethink-addr"),
+		Database: config.RethinkdbDatabase,
+		AuthKey:  config.RethinkdbKey,
+		Address:  config.RethinkdbAddress,
 	})
 }

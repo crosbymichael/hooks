@@ -9,13 +9,15 @@ import (
 
 var (
 	logger      = logrus.New()
+	config      *Config
 	globalFlags = []cli.Flag{
 		cli.BoolFlag{Name: "debug", Usage: "enable debug output"},
+		cli.StringFlag{Name: "config,c", Usage: "config file path"},
 	}
 	globalCommands = []cli.Command{
-		serveCommand,
+		githubCommand,
 		archiveCommand,
-		multiplexCommand,
+		broadcastCommand,
 	}
 )
 
@@ -23,6 +25,7 @@ func preload(context *cli.Context) error {
 	if context.GlobalBool("debug") {
 		logger.Level = logrus.DebugLevel
 	}
+	config = loadConfig(context.GlobalString("config"))
 	return nil
 }
 
