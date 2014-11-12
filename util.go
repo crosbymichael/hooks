@@ -17,7 +17,7 @@ type QueueOpts struct {
 	Signals     []os.Signal
 }
 
-func QueueOptsFromContext(channel, topic string) QueueOpts {
+func QueueOptsFromContext(topic, channel string) QueueOpts {
 	return QueueOpts{
 		Signals:     []os.Signal{syscall.SIGTERM, syscall.SIGINT},
 		LookupdAddr: config.Lookupd,

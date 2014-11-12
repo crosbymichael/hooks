@@ -22,22 +22,22 @@ type archivePayload struct {
 	Payload   interface{} `gorethink:"payload"`
 }
 
-func NewArchiveWorker(session *gorethink.Session, table, externalURLTable, hookPublishQueue string, producer *nsq.Producer) *ArchiveWorker {
+func NewArchiveWorker(session *gorethink.Session, table, subscribers, topic string, producer *nsq.Producer) *ArchiveWorker {
 	return &ArchiveWorker{
-		session:          session,
-		table:            table,
-		producer:         producer,
-		externalURLTable: externalURLTable,
-		hookPublishQueue: hookPublishQueue,
+		session:     session,
+		table:       table,
+		producer:    producer,
+		subscribers: subscribers,
+		topic:       topic,
 	}
 }
 
 type ArchiveWorker struct {
-	table            string
-	externalURLTable string
-	hookPublishQueue string
-	session          *gorethink.Session
-	producer         *nsq.Producer
+	table       string
+	subscribers string
+	topic       string
+	session     *gorethink.Session
+	producer    *nsq.Producer
 }
 
 func (a *ArchiveWorker) HandleMessage(m *nsq.Message) error {
@@ -61,6 +61,9 @@ func (a *ArchiveWorker) pushPayload(id string) error {
 	if err != nil {
 		return err
 	}
+	if len(urls) == 0 {
+		return nil
+	}
 	var (
 		batch    [][]byte
 		template = Payload{
@@ -76,11 +79,11 @@ func (a *ArchiveWorker) pushPayload(id string) error {
 		}
 		batch = append(batch, data)
 	}
-	return a.producer.MultiPublish(a.hookPublishQueue, batch)
+	return a.producer.MultiPublish(a.topic, batch)
 }
 
 func (a *ArchiveWorker) fetchExternalHookURLs() ([]string, error) {
-	resp, err := gorethink.Table(a.externalURLTable).Run(a.session)
+	resp, err := gorethink.Table(a.subscribers).Run(a.session)
 	if err != nil {
 		return nil, err
 	}

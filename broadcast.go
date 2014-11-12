@@ -18,7 +18,7 @@ func broadcastAction(context *cli.Context) {
 	}
 	handler := workers.NewMultiplexWorker(session, config.Broadcast.Timeout.Duration, logger)
 	defer handler.Close()
-	if err := ProcessQueue(handler, QueueOptsFromContext(config.Broadcast.Channel, config.Broadcast.Topic)); err != nil {
+	if err := ProcessQueue(handler, QueueOptsFromContext(config.Broadcast.Topic, config.Broadcast.Channel)); err != nil {
 		logger.Fatal(err)
 	}
 }
