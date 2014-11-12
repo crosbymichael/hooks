@@ -28,7 +28,7 @@ type BroadcastConfig struct {
 
 type ArchiveConfig struct {
 	ArchiveTable     string `toml:"archive_table"`
-	SubscribersTable string `toml:"docker_subscribers"`
+	SubscribersTable string `toml:"subscribers_table"`
 	BroadcastTopic   string `toml:"broadcast_hooks"`
 	HooksTopic       string `toml:"hooks_topic"`
 }

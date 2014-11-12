@@ -23,7 +23,8 @@ func archiveAction(context *cli.Context) {
 		logger.Fatal(err)
 	}
 	defer producer.Stop()
-	handler := workers.NewArchiveWorker(session, config.Archive.ArchiveTable, config.Archive.SubscribersTable, config.Archive.BroadcastTopic, producer)
+	handler := workers.NewArchiveWorker(session, config.Archive.ArchiveTable,
+		config.Archive.SubscribersTable, config.Archive.BroadcastTopic, producer)
 	if err := ProcessQueue(handler, QueueOptsFromContext(config.Archive.HooksTopic, "archive")); err != nil {
 		logger.Fatal(err)
 	}
