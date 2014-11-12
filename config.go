@@ -6,15 +6,24 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+type duration struct {
+	time.Duration
+}
+
+func (d *duration) UnmarshalText(text []byte) (err error) {
+	d.Duration, err = time.ParseDuration(string(text))
+	return err
+}
+
 type GithubConfig struct {
 	Listen string `toml:"listen"`
 	Secret string `toml:"secret"`
 }
 
 type BroadcastConfig struct {
-	Channel string        `toml:"channel"`
-	Topic   string        `toml:"topic"`
-	Timeout time.Duration `toml:"timeout"`
+	Channel string   `toml:"channel"`
+	Topic   string   `toml:"topic"`
+	Timeout duration `toml:"timeout"`
 }
 
 type ArchiveConfig struct {
