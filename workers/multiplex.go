@@ -99,7 +99,6 @@ func (w *MultiplexWorker) fetchPayload(p *Payload) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
 	var i map[string]interface{}
 	if err := r.One(&i); err != nil {
 		return nil, err
