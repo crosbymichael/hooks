@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -55,7 +56,23 @@ func (h *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	if err := h.producer.Publish(fmt.Sprintf("hooks-%s", repo.Name), data); err != nil {
+
+	var message = struct {
+		event    string
+		delivery string
+		payload  []byte
+	}{
+		event:    r.Header.Get("X-Github-Event"),
+		delivery: r.Header.Get("X-Github-Delivery"),
+		payload:  data,
+	}
+	m, err := json.Marshal(message)
+	if err != nil {
+		requestLog.WithField("error", err).Error("serialize message")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if err := h.producer.Publish(fmt.Sprintf("hooks-%s", repo.Name), m); err != nil {
 		requestLog.WithField("error", err).Error("publish payload onto queue")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
