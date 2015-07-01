@@ -43,7 +43,7 @@ type ArchiveWorker struct {
 func (a *ArchiveWorker) HandleMessage(m *nsq.Message) error {
 	resp, err := gorethink.Table(a.table).Insert(archivePayload{
 		Timestamp: gorethink.Now(),
-		Payload:   gorethink.Json(string(m.Body)),
+		Payload:   gorethink.JSON(string(m.Body)),
 	}).RunWrite(a.session)
 	if err != nil {
 		return err

@@ -58,10 +58,10 @@ func ProcessQueue(handler nsq.Handler, opts QueueOpts) error {
 
 func NewRethinkdbSession() (*gorethink.Session, error) {
 	return gorethink.Connect(gorethink.ConnectOpts{
-		Database:    config.RethinkdbDatabase,
-		AuthKey:     config.RethinkdbKey,
-		Address:     config.RethinkdbAddress,
-		MaxIdle:     10,
-		IdleTimeout: 20 * time.Second,
+		Database: config.RethinkdbDatabase,
+		AuthKey:  config.RethinkdbKey,
+		Address:  config.RethinkdbAddress,
+		MaxIdle:  10,
+		Timeout:  20 * time.Second,
 	})
 }
