@@ -7,6 +7,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bitly/go-nsq"
+	"github.com/bitly/go-simplejson"
 )
 
 const ROUTE = "/{user:.*}/{name:.*}/"
@@ -55,6 +56,24 @@ func (h *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
+
+	// Inject the Github headers to the payload.
+	j, err := simplejson.NewJson(data)
+	if err != nil {
+		requestLog.WithField("error", err).Error("parse github payload")
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+	for _, h := range []string{"X-Github-Event", "X-Hub-Signature", "X-Github-Delivery"} {
+		j.Set(h, r.Header.Get(h))
+	}
+	data, err = j.Encode()
+	if err != nil {
+		requestLog.WithField("error", err).Error("serialize payload")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
 	if err := h.producer.Publish(fmt.Sprintf("hooks-%s", repo.Name), data); err != nil {
 		requestLog.WithField("error", err).Error("publish payload onto queue")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
